@@ -18,7 +18,9 @@ def parse_args():
     parser.add_argument("--data-dir", type=str, default=None, help="Dataset directory")
     parser.add_argument("--model-path", type=str, default="models/matching_model.pkl", help="Trained model path")
     parser.add_argument("--threshold-path", type=str, default="models/best_threshold.json", help="Threshold metadata path")
-    parser.add_argument("--threshold", type=float, default=None, help="Base probability threshold")
+    parser.add_argument("--gate-threshold", type=float, default=None, help="Gate threshold for singleton detection")
+    parser.add_argument("--sibling-threshold", type=float, default=None, help="Floor threshold for sibling candidates")
+    parser.add_argument("--threshold", type=float, default=None, help="Legacy base threshold override")
     parser.add_argument("--margin", type=float, default=None, help="Relative dynamic margin")
     parser.add_argument("--max-per-source", type=int, default=None, help="Maximum matches per target source (S2/S3)")
     parser.add_argument("--output-dir", type=str, default="output", help="Output directory")
@@ -28,25 +30,29 @@ def parse_args():
 def main():
     args = parse_args()
     
-    threshold = args.threshold
+    gate_thresh = args.gate_threshold or args.threshold
+    sibling_thresh = args.sibling_threshold
     margin = args.margin
     max_per_source = args.max_per_source
     
     if os.path.isfile(args.threshold_path):
         with open(args.threshold_path, "r", encoding="utf-8") as f:
             meta = json.load(f)
-            if threshold is None:
-                threshold = float(meta.get("best_threshold", 0.80))
+            if gate_thresh is None:
+                gate_thresh = float(meta.get("gate_threshold", meta.get("best_threshold", 0.60)))
+            if sibling_thresh is None:
+                sibling_thresh = float(meta.get("sibling_threshold", 0.35))
             if margin is None:
-                margin = float(meta.get("best_margin", 0.05))
+                margin = float(meta.get("best_margin", 0.25))
             if max_per_source is None:
                 max_per_source = int(meta.get("max_per_source", 3))
-            print(f"Loaded calibrated parameters from {args.threshold_path}: Threshold={threshold:.2f}, Margin={margin:.2f}, MaxPerSource={max_per_source}")
+            print(f"Loaded calibrated parameters from {args.threshold_path}: Gate={gate_thresh:.2f}, SiblingFloor={sibling_thresh:.2f}, Margin={margin:.2f}, MaxPerSource={max_per_source}")
     else:
-        threshold = 0.80 if threshold is None else threshold
-        margin = 0.05 if margin is None else margin
+        gate_thresh = 0.60 if gate_thresh is None else gate_thresh
+        sibling_thresh = 0.35 if sibling_thresh is None else sibling_thresh
+        margin = 0.25 if margin is None else margin
         max_per_source = 3 if max_per_source is None else max_per_source
-        print(f"Using default parameters: Threshold={threshold:.2f}, Margin={margin:.2f}, MaxPerSource={max_per_source}")
+        print(f"Using default parameters: Gate={gate_thresh:.2f}, SiblingFloor={sibling_thresh:.2f}, Margin={margin:.2f}, MaxPerSource={max_per_source}")
         
     data_dir = find_dataset_dir(args.data_dir)
     test_dir = os.path.join(data_dir, "test")
@@ -162,8 +168,8 @@ def main():
         probs = model.predict_proba(np.array(cand_features))
         
         max_p = float(np.max(probs))
-        if max_p >= threshold:
-            cutoff = max(threshold, max_p - margin)
+        if max_p >= gate_thresh:
+            cutoff = max(sibling_thresh, max_p - margin)
             passing = [(cid, p) for cid, p in zip(valid_candidates, probs) if p >= cutoff]
             passing.sort(key=lambda x: x[1], reverse=True)
             

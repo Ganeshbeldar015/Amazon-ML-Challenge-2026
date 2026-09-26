@@ -6,18 +6,18 @@ from typing import Optional
 
 class EntityMatchingModel:
     """
-    LightGBM Classifier wrapper for Business Entity Resolution pairwise classification.
-    Optimized with L1/L2 regularization and minimum leaf sample constraints to prevent overfitting.
+    High-Capacity Regularized LightGBM Classifier for Business Entity Resolution.
+    Tuned for 45 non-linear dense features to achieve maximum discriminative precision.
     """
     def __init__(
         self,
-        n_estimators: int = 200,
-        learning_rate: float = 0.05,
-        max_depth: int = 6,
-        num_leaves: int = 31,
-        min_child_samples: int = 50,
-        reg_alpha: float = 0.1,
-        reg_lambda: float = 1.0
+        n_estimators: int = 350,
+        learning_rate: float = 0.04,
+        max_depth: int = 8,
+        num_leaves: int = 63,
+        min_child_samples: int = 40,
+        reg_alpha: float = 0.05,
+        reg_lambda: float = 0.5
     ):
         self.clf = lgb.LGBMClassifier(
             n_estimators=n_estimators,
@@ -25,8 +25,8 @@ class EntityMatchingModel:
             max_depth=max_depth,
             num_leaves=num_leaves,
             min_child_samples=min_child_samples,
-            subsample=0.8,
-            colsample_bytree=0.8,
+            subsample=0.85,
+            colsample_bytree=0.85,
             reg_alpha=reg_alpha,
             reg_lambda=reg_lambda,
             random_state=42,

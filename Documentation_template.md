@@ -60,10 +60,10 @@ Naive pair comparison of 2.2M Source 1 records against millions of Source 2/3 re
 - **Postal features (5):** Postal presence indicator (`both_have_postal`), postal code exact match, postal prefix-2 match, postal prefix-3 match, postal conflict penalty indicator.
 - **Source Indicator (1):** Binary flag distinguishing Source 2 vs Source 3 targets.
 
-**Model type:** LightGBM Gradient Boosted Decision Tree (200 trees, max depth 6, num_leaves 31, learning rate 0.05, min_child_samples 50, L1 alpha 0.1, L2 lambda 1.0) under Apache 2.0 license (~26,000 parameters, well below the 8B constraint).  
-**Decision & Ranking Logic:** Dynamic Relative Margin Selection:
-- If $\max(P) \ge T_{\text{optimal}}$, accept the top match and all sibling candidates within a margin of $\Delta$ of the top match: $\{c \mid P(c) \ge \max(T_{\text{optimal}}, \max(P) - \Delta)\}$, with per-source capping.
-- If $\max(P) < T_{\text{optimal}}$, classify as a singleton (empty list).
+**Model type:** High-Capacity LightGBM Gradient Boosted Decision Tree (350 trees, max depth 8, num_leaves 63, learning rate 0.04, min_child_samples 40, L1 alpha 0.05, L2 lambda 0.5) under Apache 2.0 license (~32,000 parameters, well below the 8B constraint).  
+**Decision & Ranking Logic:** Two-Level Dynamic Calibration (Singleton Gate + Sibling Floor + Adaptive Margin):
+- **Level 1 (Singleton Detection):** If $\max(P) < T_{\text{gate}}$, classify as a singleton (empty list, scoring 1.0 full credit).
+- **Level 2 (Sibling Admission):** If $\max(P) \ge T_{\text{gate}}$, admit all candidates exceeding the sibling floor and relative margin: $\{c \mid P(c) \ge \max(T_{\text{sibling}}, \max(P) - \Delta)\}$, with per-source capping ($k \le 3-4$ matches per source).
 
 ---
 

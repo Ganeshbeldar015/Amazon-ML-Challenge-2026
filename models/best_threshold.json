@@ -1,6 +1,8 @@
 {
-  "best_threshold": 0.8,
-  "best_margin": 0.08,
-  "max_per_source": 4,
-  "val_f05": 0.7602468799558288
+  "gate_threshold": 0.60,
+  "sibling_threshold": 0.35,
+  "best_threshold": 0.60,
+  "best_margin": 0.25,
+  "max_per_source": 3,
+  "val_f05": 0.7696763902349318
 }

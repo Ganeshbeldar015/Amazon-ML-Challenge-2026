@@ -229,65 +229,74 @@ def main():
         else:
             val_scores_map[s1_id] = []
             
-    best_thresh = 0.80
-    best_margin = 0.05
+    best_gate = 0.60
+    best_sibling = 0.35
+    best_margin = 0.25
     best_max_per_src = 3
     best_f05 = -1.0
     
     sub_gt = {k: val_gt[k] for k in val_eval_ids}
     
-    print("-" * 55)
-    print(f"{'Threshold':<12} | {'Margin':<10} | {'MaxSrc':<8} | {'Macro F0.5':<12}")
-    print("-" * 55)
+    print("-" * 65)
+    print(f"{'GateThresh':<12} | {'SiblingThresh':<14} | {'Margin':<10} | {'MaxSrc':<8} | {'Macro F0.5':<12}")
+    print("-" * 65)
     
-    for thresh in np.arange(0.60, 0.96, 0.04):
-        thresh = round(float(thresh), 2)
-        for margin in [0.03, 0.05, 0.08, 0.12]:
-            for max_per_src in [2, 3, 4]:
-                preds = {}
-                for s1_id in val_eval_ids:
-                    pairs = val_scores_map[s1_id]
-                    if not pairs:
-                        preds[s1_id] = set()
-                        continue
-                    max_p = max(p for _, p in pairs)
-                    if max_p >= thresh:
-                        cutoff = max(thresh, max_p - margin)
-                        passing = [(cid, p) for cid, p in pairs if p >= cutoff]
-                        passing.sort(key=lambda x: x[1], reverse=True)
-                        
-                        selected = []
-                        s2_cnt, s3_cnt = 0, 0
-                        for cid, p in passing:
-                            if cid.startswith("S2-"):
-                                if s2_cnt < max_per_src:
+    for gate_t in [0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75]:
+        gate_t = round(float(gate_t), 2)
+        for sib_t in [0.30, 0.35, 0.40, 0.45, 0.50]:
+            sib_t = round(float(sib_t), 2)
+            if sib_t > gate_t:
+                continue
+            for margin in [0.15, 0.20, 0.25, 0.30]:
+                margin = round(float(margin), 2)
+                for max_per_src in [3, 4]:
+                    preds = {}
+                    for s1_id in val_eval_ids:
+                        pairs = val_scores_map[s1_id]
+                        if not pairs:
+                            preds[s1_id] = set()
+                            continue
+                        max_p = max(p for _, p in pairs)
+                        if max_p >= gate_t:
+                            cutoff = max(sib_t, max_p - margin)
+                            passing = [(cid, p) for cid, p in pairs if p >= cutoff]
+                            passing.sort(key=lambda x: x[1], reverse=True)
+                            
+                            selected = []
+                            s2_cnt, s3_cnt = 0, 0
+                            for cid, p in passing:
+                                if cid.startswith("S2-"):
+                                    if s2_cnt < max_per_src:
+                                        selected.append(cid)
+                                        s2_cnt += 1
+                                elif cid.startswith("S3-"):
+                                    if s3_cnt < max_per_src:
+                                        selected.append(cid)
+                                        s3_cnt += 1
+                                else:
                                     selected.append(cid)
-                                    s2_cnt += 1
-                            elif cid.startswith("S3-"):
-                                if s3_cnt < max_per_src:
-                                    selected.append(cid)
-                                    s3_cnt += 1
-                            else:
-                                selected.append(cid)
-                        preds[s1_id] = set(selected)
-                    else:
-                        preds[s1_id] = set()
+                            preds[s1_id] = set(selected)
+                        else:
+                            preds[s1_id] = set()
+                            
+                    score = compute_macro_f05(preds, sub_gt)
+                    if score > best_f05:
+                        best_f05 = score
+                        best_gate = gate_t
+                        best_sibling = sib_t
+                        best_margin = margin
+                        best_max_per_src = max_per_src
+                        print(f"{gate_t:<12.2f} | {sib_t:<14.2f} | {margin:<10.2f} | {max_per_src:<8} | {score:<12.4f} *")
                         
-                score = compute_macro_f05(preds, sub_gt)
-                if score > best_f05:
-                    best_f05 = score
-                    best_thresh = thresh
-                    best_margin = margin
-                    best_max_per_src = max_per_src
-                    print(f"{thresh:<12.2f} | {margin:<10.2f} | {max_per_src:<8} | {score:<12.4f} *")
-                    
-    print("-" * 55)
-    print(f"Optimal Configuration: Threshold={best_thresh:.2f}, Margin={best_margin:.2f}, MaxPerSource={best_max_per_src}")
+    print("-" * 65)
+    print(f"Optimal Configuration: Gate={best_gate:.2f}, SiblingFloor={best_sibling:.2f}, Margin={best_margin:.2f}, MaxPerSource={best_max_per_src}")
     print(f"Best Validation Macro F0.5: {best_f05:.4f}")
     
     with open(args.threshold_out, "w", encoding="utf-8") as f:
         json.dump({
-            "best_threshold": best_thresh,
+            "gate_threshold": best_gate,
+            "sibling_threshold": best_sibling,
+            "best_threshold": best_gate,
             "best_margin": best_margin,
             "max_per_source": best_max_per_src,
             "val_f05": best_f05

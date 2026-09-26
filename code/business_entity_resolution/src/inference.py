@@ -133,9 +133,18 @@ def main():
     del df_s1
 
     print("Running precision-guarded dynamic ranking inference...")
-    for idx, (s1_id, s1_country, s1_name, s1_addr, s1_postal, s1_house) in enumerate(
-        zip(s1_eids, s1_countries, s1_names, s1_addrs, s1_postals, s1_houses)
-    ):
+    try:
+        from tqdm import tqdm
+        iterator = tqdm(
+            zip(s1_eids, s1_countries, s1_names, s1_addrs, s1_postals, s1_houses),
+            total=total_s1,
+            desc="Scoring entities",
+            mininterval=2.0
+        )
+    except ImportError:
+        iterator = zip(s1_eids, s1_countries, s1_names, s1_addrs, s1_postals, s1_houses)
+        
+    for idx, (s1_id, s1_country, s1_name, s1_addr, s1_postal, s1_house) in enumerate(iterator):
         
         candidates = blocker.get_candidates_for_s1(s1_country, s1_name, s1_postal, s1_house, s1_addr)
         

@@ -182,15 +182,15 @@ def main():
     print(f"Constructed {len(y_train):,} training pairs (Pos: {np.sum(y_train==1):,}, Neg: {np.sum(y_train==0):,})")
     
     # 6. Fit LightGBM Model with Regularization
-    print("Training Regularized LightGBM classifier...")
+    print("Training High-Capacity Regularized LightGBM classifier (350 trees, depth 8, 63 leaves)...")
     model = EntityMatchingModel(
-        n_estimators=200,
-        learning_rate=0.05,
-        max_depth=6,
-        num_leaves=31,
-        min_child_samples=50,
-        reg_alpha=0.1,
-        reg_lambda=1.0
+        n_estimators=350,
+        learning_rate=0.04,
+        max_depth=8,
+        num_leaves=63,
+        min_child_samples=40,
+        reg_alpha=0.05,
+        reg_lambda=0.5
     )
     model.fit(X_train, y_train)
     
@@ -225,7 +225,8 @@ def main():
                 
         if cand_feats:
             probs = model.predict_proba(np.array(cand_feats))
-            val_scores_map[s1_id] = list(zip(valid_cands, probs))
+            pairs = sorted(zip(valid_cands, probs), key=lambda x: x[1], reverse=True)
+            val_scores_map[s1_id] = pairs
         else:
             val_scores_map[s1_id] = []
             
@@ -241,30 +242,29 @@ def main():
     print(f"{'GateThresh':<12} | {'SiblingThresh':<14} | {'Margin':<10} | {'MaxSrc':<8} | {'Macro F0.5':<12}")
     print("-" * 65)
     
-    for gate_t in [0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75]:
+    for gate_t in [0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80]:
         gate_t = round(float(gate_t), 2)
-        for sib_t in [0.30, 0.35, 0.40, 0.45, 0.50]:
+        for sib_t in [0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50]:
             sib_t = round(float(sib_t), 2)
             if sib_t > gate_t:
                 continue
-            for margin in [0.15, 0.20, 0.25, 0.30]:
+            for margin in [0.15, 0.20, 0.25, 0.30, 0.35]:
                 margin = round(float(margin), 2)
-                for max_per_src in [3, 4]:
+                for max_per_src in [2, 3, 4]:
                     preds = {}
                     for s1_id in val_eval_ids:
                         pairs = val_scores_map[s1_id]
                         if not pairs:
                             preds[s1_id] = set()
                             continue
-                        max_p = max(p for _, p in pairs)
+                        max_p = pairs[0][1]
                         if max_p >= gate_t:
                             cutoff = max(sib_t, max_p - margin)
-                            passing = [(cid, p) for cid, p in pairs if p >= cutoff]
-                            passing.sort(key=lambda x: x[1], reverse=True)
+                            passing = [cid for cid, p in pairs if p >= cutoff]
                             
                             selected = []
                             s2_cnt, s3_cnt = 0, 0
-                            for cid, p in passing:
+                            for cid in passing:
                                 if cid.startswith("S2-"):
                                     if s2_cnt < max_per_src:
                                         selected.append(cid)

@@ -1,0 +1,68 @@
+# =============================================================================
+# Amazon ML Challenge 2026 - .gitignore
+# =============================================================================
+
+# 1. Large Datasets (GitHub enforces a 100MB limit per file)
+student_resource/dataset/
+dataset/
+*.tsv
+*.csv
+*.parquet
+!models/*.json
+
+# 2. Large Generated Outputs (keep directories tracked via .gitkeep)
+output/*.tsv
+output/*.csv
+!output/.gitkeep
+
+# 3. Model Binaries & Heavy Weights (keep configuration JSONs)
+models/*.pkl
+models/*.joblib
+models/*.bin
+models/*.onnx
+!models/.gitkeep
+!models/best_threshold.json
+
+# 4. Submission Archives
+*.zip
+*.tar.gz
+*.7z
+*.rar
+team_submission.zip
+
+# 5. Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# 6. Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# 7. Operating System & IDE Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# 8. Temporary & Scratch Scripts
+scratch/
+scratch_*.py
+test_blocker_recall.py
+*.log

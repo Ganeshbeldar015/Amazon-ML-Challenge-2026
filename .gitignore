@@ -14,6 +14,7 @@ dataset/
 output/*.tsv
 output/*.csv
 !output/.gitkeep
+output_078/
 
 # 3. Model Binaries & Heavy Weights (keep configuration JSONs)
 models/*.pkl
@@ -65,4 +66,5 @@ Thumbs.db
 scratch/
 scratch_*.py
 test_blocker_recall.py
+fix_full_submission.py
 *.log

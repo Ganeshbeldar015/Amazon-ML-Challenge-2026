@@ -2,7 +2,7 @@ import re
 import unicodedata
 from typing import Tuple, Optional, Set
 
-# Legal suffix normalization map
+# Legal suffix normalization map (US, India, UK, France, Germany)
 LEGAL_SUFFIX_MAP = {
     r'\b(pvt|pvtltd|private limited|pvt ltd)\b': 'private limited',
     r'\b(ltd|limited)\b': 'limited',
@@ -14,21 +14,29 @@ LEGAL_SUFFIX_MAP = {
     r'\b(gmbh)\b': 'gmbh',
     r'\b(sa|s\.a\.)\b': 'sa',
     r'\b(sarl|s\.a\.r\.l\.)\b': 'sarl',
-    r'\b(sas|s\.a\.s\.)\b': 'sas'
+    r'\b(sas|s\.a\.s\.|sasu)\b': 'sas',
+    r'\b(eurl|e\.u\.r\.l\.)\b': 'eurl',
+    r'\b(sci|s\.c\.i\.)\b': 'sci',
+    r'\b(snc|s\.n\.c\.)\b': 'snc',
+    r'\b(gie|g\.i\.e\.)\b': 'gie',
+    r'\b(selarl|earl|scop|sem)\b': 'sarl',
+    r'\b(societe|entreprise|etablissement|ets)\b': 'company'
 }
 
 BASE_NAME_STRIP_RE = re.compile(
-    r'\b(private limited|limited|incorporated|corporation|llc|llp|company|gmbh|sa|sarl|sas|pvt|ltd|inc|corp|co)\b',
+    r'\b(private limited|limited|incorporated|corporation|llc|llp|company|gmbh|sa|sarl|sas|sasu|eurl|sci|snc|gie|pvt|ltd|inc|corp|co|societe|entreprise)\b',
     re.IGNORECASE
 )
 
-# High-speed word substitution dictionary for address abbreviations and US/Indian states
+# High-speed word substitution dictionary for address abbreviations and US/Indian/French streets
 ADDR_AND_STATE_WORD_MAP = {
-    # Road abbreviations
-    'rd': 'road', 'st': 'street', 'ave': 'avenue', 'av': 'avenue', 'blvd': 'boulevard',
+    # Road abbreviations (English & French)
+    'rd': 'road', 'st': 'street', 'ave': 'avenue', 'av': 'avenue', 'blvd': 'boulevard', 'bd': 'boulevard',
     'ln': 'lane', 'dr': 'drive', 'ct': 'court', 'pl': 'place', 'sq': 'square',
     'hwy': 'highway', 'flr': 'floor', 'fl': 'floor', 'apt': 'apartment', 'ste': 'suite',
     'no': 'number', 'ph': 'phase', 'sec': 'sector', 'off': 'office', 'near': 'nr',
+    'rue': 'street', 'chemin': 'chemin', 'ch': 'chemin', 'impasse': 'impasse', 'imp': 'impasse',
+    'allee': 'allee', 'all': 'allee', 'quai': 'quai', 'cours': 'cours', 'route': 'route', 'rte': 'route',
     # US states
     'mo': 'missouri', 'oh': 'ohio', 'va': 'virginia', 'ny': 'new york', 'ca': 'california',
     'tx': 'texas', 'fl': 'florida', 'il': 'illinois', 'pa': 'pennsylvania', 'nc': 'north carolina',

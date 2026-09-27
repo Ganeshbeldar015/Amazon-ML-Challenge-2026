@@ -1,7 +1,13 @@
 # Amazon ML Challenge 2026: Business Entity Resolution
 ## Technical Architecture & Methodology Report
 
-**Team Name:** Elite Entity Resolvers  
+**Team Name:** Apex-Zenith  
+**Team Members:**  
+- **Ganesh Bhaktaraj Beldar** (Team Leader) 
+- **Siddhi Someshwar Bhosale** 
+- **Abdullah Munawar Khan**  
+- **Soniya Pangatte** 
+
 **Competition Window:** 25 September – 27 September 2026  
 **Evaluation Metric:** Macro-Averaged $F_{0.5}$ (Precision-Weighted)  
 **Hardware Profile:** Local Intel/AMD x86_64, 24 GB RAM, NVIDIA GeForce RTX 3050 Laptop GPU (DirectML Accelerated)  
